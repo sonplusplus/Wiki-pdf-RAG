@@ -105,7 +105,7 @@ def summarize(results: list[dict]) -> dict:
 def main() -> None:
     cases = load_eval_set(EVAL_SET_PATH)
     retriever = Retriever()
-    answerer = GroundedAnswerer()
+    answerer = GroundedAnswerer(retriever=retriever)
     results = [evaluate_case(case, retriever, answerer) for case in cases]
     report = {"summary": summarize(results), "results": results}
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

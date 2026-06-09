@@ -13,8 +13,9 @@ def main() -> None:
         raise SystemExit(2)
 
     question = " ".join(sys.argv[1:])
-    retrieval = Retriever().retrieve(question)
-    print(GroundedAnswerer().answer(question, retrieval))
+    retriever = Retriever()
+    retrieval = retriever.retrieve(question)
+    print(GroundedAnswerer(retriever=retriever).answer(question, retrieval))
 
 
 if __name__ == "__main__":

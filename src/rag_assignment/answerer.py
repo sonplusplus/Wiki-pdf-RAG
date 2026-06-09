@@ -436,6 +436,10 @@ def _contains_terms(text: str, terms: list[str]) -> bool:
 
 
 class GroundedAnswerer:
+    def __init__(self, retriever: Any | None = None):
+        self.retriever = retriever
+        self._compare_sub_summary_hits: list[dict[str, Any]] = []
+
     def answer(self, question: str, retrieval: dict[str, Any]) -> str:
         plan = retrieval["plan"]
         text_hits = retrieval["text_hits"]
@@ -493,9 +497,12 @@ class GroundedAnswerer:
         question_type = plan.question_type
         final_answer: str | None = None
         if question_type == "compare":
-            final_answer = "\n".join(
-                self._fallback_compare_answer(question, hits, getattr(plan, "entities", []))
-            )
+            self._compare_sub_summary_hits = []
+            entities = getattr(plan, "entities", [])
+            if self.retriever and len(entities) >= 2:
+                final_answer = self._compare_via_sub_summaries(question, entities)
+            else:
+                final_answer = "\n".join(self._fallback_compare_answer(question, hits, entities))
         elif self._ollama_enabled():
             generated = self._try_ollama_answer(question, question_type, hits)
             if generated:
@@ -512,8 +519,35 @@ class GroundedAnswerer:
         final_answer = self._normalize_final_answer(question, question_type, final_answer)
         if self._bad_final_answer(question_type, final_answer):
             final_answer = "\n".join(self._fallback_final_answer(question, question_type, hits, plan))
-        evidence = _select_evidence(question, plan, hits, final_answer=final_answer)
-        return self._format_text_response(final_answer, question, hits, plan, evidence)
+        response_hits = hits
+        if question_type == "compare" and self._compare_sub_summary_hits:
+            response_hits = self._merge_hits(self._compare_sub_summary_hits, hits)
+        evidence = _select_evidence(question, plan, response_hits, final_answer=final_answer)
+        return self._format_text_response(final_answer, question, response_hits, plan, evidence)
+
+    def _merge_hits(
+        self,
+        primary_hits: list[dict[str, Any]],
+        secondary_hits: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        merged: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for hit in primary_hits + secondary_hits:
+            metadata = hit.get("metadata", {})
+            hit_key = str(
+                hit.get("id")
+                or (
+                    metadata.get("source_file"),
+                    metadata.get("page"),
+                    metadata.get("section"),
+                    _dedupe_key(hit.get("content", "")),
+                )
+            )
+            if hit_key in seen:
+                continue
+            merged.append(hit)
+            seen.add(hit_key)
+        return merged
 
     def _format_text_response(
         self,
@@ -714,6 +748,26 @@ class GroundedAnswerer:
             if len(lines) >= 4:
                 break
         return lines
+
+    def _compare_via_sub_summaries(self, question: str, entities: list[str]) -> str:
+        self._compare_sub_summary_hits = []
+        lines = ["The retrieved materials support these comparison points:"]
+        for entity in entities:
+            if not self.retriever:
+                break
+            sub = self.retriever.retrieve(f"Summarize {entity}")
+            hits = [hit for hit in sub["text_hits"] if hit.get("score", 0) >= MIN_TEXT_SCORE]
+            self._compare_sub_summary_hits.extend(hits)
+            if hits:
+                summary_lines = self._fallback_summary_answer(entity, hits)
+                sentence = next((line.lstrip("- ") for line in summary_lines if line.startswith("- ")), "")
+                if sentence:
+                    lines.append(f"- {entity}: {sentence}")
+                else:
+                    lines.append(f"- {entity}: Not enough evidence found.")
+            else:
+                lines.append(f"- {entity}: Not enough evidence found.")
+        return "\n".join(lines)
 
     def _fallback_compare_answer(
         self,

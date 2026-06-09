@@ -35,8 +35,8 @@ def get_retriever() -> Retriever:
 
 
 @st.cache_resource
-def get_answerer() -> GroundedAnswerer:
-    return GroundedAnswerer()
+def get_answerer(_retriever: Retriever) -> GroundedAnswerer:
+    return GroundedAnswerer(retriever=_retriever)
 
 
 st.title("PDF RAG")
@@ -74,7 +74,7 @@ question = st.text_input("Question", placeholder="Ask from the provided PDFs")
 
 if st.button("Ask", type="primary") and question.strip():
     retriever = get_retriever()
-    answerer = get_answerer()
+    answerer = get_answerer(retriever)
     retrieval = retriever.retrieve(question, debug=show_retrieval_debug)
 
     st.markdown(answerer.answer(question, retrieval))

@@ -112,3 +112,57 @@ def test_answerer_release_lookup_synthesizes_date(monkeypatch):
 
     assert "Nintendo Switch was released on March 3, 2017." in answer
     assert "unveiled on October 20, 2016" not in answer.split("## Evidence / Citations")[0]
+
+
+def test_compare_answer_uses_entity_sub_summaries(monkeypatch):
+    monkeypatch.setattr("rag_assignment.answerer.LLM_PROVIDER", "none")
+
+    class FakeRetriever:
+        def __init__(self):
+            self.queries = []
+
+        def retrieve(self, question: str):
+            self.queries.append(question)
+            if "iPhone 15" in question:
+                content = "The iPhone 15 is a smartphone developed by Apple with a 6.1-inch display."
+                source = "IPhone_15.pdf"
+            else:
+                content = "The Samsung Galaxy S24 is a smartphone developed by Samsung with Galaxy AI features."
+                source = "Samsung_Galaxy_S24.pdf"
+            return {
+                "plan": SimpleNamespace(question_type="summary", entities=[]),
+                "image_hits": [],
+                "text_hits": [
+                    {
+                        "id": source,
+                        "score": 0.9,
+                        "content": content,
+                        "metadata": {"source_file": source, "page": 1, "section": "Overview"},
+                    }
+                ],
+            }
+
+    retriever = FakeRetriever()
+    retrieval = {
+        "plan": SimpleNamespace(question_type="compare", entities=["iPhone 15", "Samsung Galaxy S24"]),
+        "image_hits": [],
+        "text_hits": [
+            {
+                "id": "compare-seed",
+                "score": 0.9,
+                "content": "iPhone 15 and Samsung Galaxy S24 are both smartphones.",
+                "metadata": {"source_file": "Comparison.pdf", "page": 1, "section": "Overview"},
+            }
+        ],
+    }
+
+    answer = GroundedAnswerer(retriever=retriever).answer(
+        "Compare iPhone 15 and Samsung Galaxy S24.",
+        retrieval,
+    )
+
+    assert retriever.queries == ["Summarize iPhone 15", "Summarize Samsung Galaxy S24"]
+    assert "- iPhone 15:" in answer
+    assert "- Samsung Galaxy S24:" in answer
+    assert "Apple" in answer
+    assert "Samsung" in answer
