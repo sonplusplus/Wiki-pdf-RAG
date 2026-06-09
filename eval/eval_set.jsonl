@@ -1,0 +1,12 @@
+{"id":"simple_usb_c","type":"simple_lookup","question":"What is USB-C?","expected_docs":["USB-C.pdf"],"must_contain":["connector"],"unsupported":false}
+{"id":"simple_nintendo_switch","type":"simple_lookup","question":"When was the Nintendo Switch released?","expected_docs":["Nintendo_Switch.pdf"],"must_contain":["2017"],"unsupported":false}
+{"id":"summary_bluetooth","type":"summary","question":"Summarize the key features of Bluetooth.","expected_docs":["Bluetooth.pdf"],"must_contain":["wireless"],"unsupported":false}
+{"id":"summary_vision_pro","type":"summary","question":"Give a short summary of Apple Vision Pro.","expected_docs":["Apple_Vision_Pro.pdf"],"must_contain":["Apple"],"unsupported":false}
+{"id":"compare_iphone_s24","type":"compare","question":"Compare iPhone 15 and Samsung Galaxy S24.","expected_docs":["IPhone_15.pdf","Samsung_Galaxy_S24.pdf"],"must_contain":["iPhone","Galaxy"],"unsupported":false}
+{"id":"compare_oled_qled","type":"compare","question":"What are the main differences between OLED and QLED?","expected_docs":["OLED.pdf","QLED.pdf"],"must_contain":["OLED","QLED"],"unsupported":false}
+{"id":"complex_mirrorless","type":"complex_lookup","question":"How do mirrorless cameras differ from DSLR cameras in design and usage?","expected_docs":["Mirrorless_interchangeable-lens_camera.pdf"],"must_contain":["mirrorless"],"unsupported":false}
+{"id":"complex_lithium","type":"complex_lookup","question":"Explain the role of lithium-ion batteries across modern consumer devices and what limitations are mentioned.","expected_docs":["Lithium-ion_battery.pdf"],"must_contain":["lithium"],"unsupported":false}
+{"id":"yes_no_iphone_se","type":"yes_no","question":"Is the iPhone SE classified as a smartphone in the provided materials?","expected_docs":["IPhone_SE.pdf"],"must_contain":["smartphone"],"unsupported":false}
+{"id":"yes_no_chromecast","type":"yes_no","question":"Do the provided materials state that Chromecast is a smart TV?","expected_docs":["Chromecast.pdf"],"must_contain":["Chromecast"],"unsupported":false}
+{"id":"image_vision_pro","type":"image","question":"Show me a picture of Apple Vision Pro.","expected_docs":["Apple_Vision_Pro.pdf"],"must_contain":["Apple_Vision_Pro.pdf"],"unsupported":false}
+{"id":"unsupported_france","type":"unsupported","question":"What is the capital of France?","expected_docs":[],"must_contain":["Not found in provided materials"],"unsupported":true}

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+myenv/
+.env
+wiki_pdfs/
+data/*.log
+data/index/*.faiss
+data/index/*.sqlite
+data/index/*.jsonl
+data/index/*.json
+data/extracted_images/
+report/eval_results.json
+README.md
+report/
+.streamlit/
