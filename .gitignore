@@ -14,3 +14,4 @@ report/eval_results.json
 README.md
 report/
 .streamlit/
+.vscode/

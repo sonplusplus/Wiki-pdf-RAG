@@ -67,6 +67,7 @@ def evaluate_case(case: dict, retriever: Retriever, answerer: GroundedAnswerer) 
 
     return {
         "id": case["id"],
+        "split": case.get("split", "in_sample"),
         "type": case["type"],
         "question": case["question"],
         "latency_ms": latency_ms,
@@ -81,7 +82,7 @@ def evaluate_case(case: dict, retriever: Retriever, answerer: GroundedAnswerer) 
     }
 
 
-def summarize(results: list[dict]) -> dict:
+def _compute_metrics(results: list[dict]) -> dict:
     def ratio(key: str) -> float:
         values = [result[key] for result in results if result[key] is not None]
         if not values:
@@ -99,6 +100,23 @@ def summarize(results: list[dict]) -> dict:
             sum(result["latency_ms"] for result in results) / max(1, len(results)),
             2,
         ),
+    }
+
+
+def summarize(results: list[dict]) -> dict:
+    splits: dict[str, list[dict]] = {"all": results}
+    for result in results:
+        splits.setdefault(result.get("split", "in_sample"), []).append(result)
+
+    ordered_splits = ["in_sample", "held_out", "all"]
+    for split in splits:
+        if split not in ordered_splits:
+            ordered_splits.append(split)
+
+    return {
+        split: _compute_metrics(splits[split])
+        for split in ordered_splits
+        if splits.get(split)
     }
 
 
